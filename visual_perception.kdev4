@@ -1,0 +1,4 @@
+[Project]
+Name=visual_perception
+Manager=KDevCMakeManager
+VersionControl=kdevgit

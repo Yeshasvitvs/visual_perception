@@ -60,8 +60,7 @@ int main(int argc,char** argv)
     {
         pose.frame_grabber_->cvMatCapture();
         cv::Mat image =pose.frame_grabber_->getCVMat();
-        pose.detectMarkers(image);
-        pose.drawMarkers(image);
+        pose.detectMarkersAndComputePose(image);
         
         if(!image.empty())
         {

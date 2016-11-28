@@ -52,15 +52,20 @@ namespace visual_perception
             std::vector<cv::Mat> *marker_images_;
             std::string dir_location_ = "/home/yeshi/projects/visual_perception/markers/";
             
+            
             std::vector<int> marker_ids_;
             std::vector<std::vector<cv::Point2f>> marker_corners_, rejected_candidates_;
             cv::aruco::DetectorParameters detection_params_; 
             
             cv::Mat camera_matrix_, dist_coeffs_;
+            std::string calibration_file_ = "/home/yeshi/projects/visual_perception/out_camera_data.yml";
+            cv::FileStorage fs;
+            
             //Vectors for storing pose of each marker
-            std::vector<cv::Vec3f> rot_vector_,trans_vector_;
+            std::vector<cv::Vec3d> rot_vector_,trans_vector_;
             
         public:
+            bool marker_detect_success_;
             visual_perception::FrameGrabber* frame_grabber_;
             //Default Constructor 
             PoseEstimation()
@@ -74,10 +79,11 @@ namespace visual_perception
             
             cv::Mat getMarkerImage(int);
             void saveMarkerImages();
-            void detectMarkers(cv::Mat);
-            void drawMarkers(cv::Mat); 
-
-            std::vector<cv::Vec3f> markersPose();
+            
+            bool detectMarkersAndComputePose(cv::Mat&);
+            void drawMarkers(cv::Mat&); 
+            void markersPoseCompute();
+            void drawMarkersPose(cv::Mat&);
                         
             //Destructor
             ~PoseEstimation();

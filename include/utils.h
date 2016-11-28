@@ -8,9 +8,12 @@
 #include <opencv/cv.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
+#include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
+#include <opencv2/calib3d.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/aruco.hpp> 
+
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
 #include <yarp/dev/all.h>

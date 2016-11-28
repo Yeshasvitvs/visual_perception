@@ -33,6 +33,11 @@ visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string 
     //Initialize the FrameGrabber 
     frame_grabber_ = new FrameGrabber(robot);
     
+    //TODO Do the camera calibration later
+    fs.open(calibration_file_,cv::FileStorage::READ);
+    fs["Camera_Matrix"] >> camera_matrix_;
+    fs["Distortion_Coefficients"] >> dist_coeffs_;
+    fs.release();
     
     if(robot!="opencv")
     {
@@ -92,19 +97,43 @@ void visual_perception::PoseEstimation::saveMarkerImages()
     }
 }
 
-void visual_perception::PoseEstimation::detectMarkers(cv::Mat image)
+bool visual_perception::PoseEstimation::detectMarkersAndComputePose(cv::Mat& image)
 {
     cv::aruco::detectMarkers(image,marker_dictionary_,marker_corners_,marker_ids_,detection_params_,rejected_candidates_);
+    if(!marker_ids_.size() > 0)
+    {
+        std::cout << "No markers detected!" << std::endl;
+        marker_detect_success_=0;
+    }
+    else 
+    {
+        std::cout << "Markers detected" << std::endl;
+        marker_detect_success_=1;
+        cv::aruco::drawDetectedMarkers(image,marker_corners_,marker_ids_);
+        cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rot_vector_,trans_vector_);
+        for(int i=0; i < marker_ids_.size(); i++)
+        {
+            cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rot_vector_[i],trans_vector_[i],0.1);
+        }
+    }
 }
 
-void visual_perception::PoseEstimation::drawMarkers(cv::Mat image)
+void visual_perception::PoseEstimation::drawMarkers(cv::Mat& image)
 {
     cv::aruco::drawDetectedMarkers(image,marker_corners_,marker_ids_);
 }
 
-std::vector<cv::Vec3f> visual_perception::PoseEstimation::markersPose()
+void visual_perception::PoseEstimation::markersPoseCompute()
 {
     cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rot_vector_,trans_vector_);
+}
+
+void visual_perception::PoseEstimation::drawMarkersPose(cv::Mat& image)
+{
+    for(int i=0; i < marker_ids_.size(); i++)
+    {
+        cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rot_vector_[i],trans_vector_[i],0.1);
+    }
 }
 
 void visual_perception::PoseEstimation::eyePoseCompute()

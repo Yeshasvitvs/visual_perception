@@ -44,6 +44,22 @@ namespace visual_perception
             yarp::os::BufferedPort<yarp::sig::Vector> *head_state_input_port_;
             
             yarp::sig::Vector eye_pose_;
+            
+            //ArUco Markers
+            int number_of_markers_ = 6;
+            int marker_dimension_ = 4;
+            cv::aruco::Dictionary marker_dictionary_;
+            std::vector<cv::Mat> *marker_images_;
+            std::string dir_location_ = "/home/yeshi/projects/visual_perception/markers/";
+            
+            std::vector<int> marker_ids_;
+            std::vector<std::vector<cv::Point2f>> marker_corners_, rejected_candidates_;
+            cv::aruco::DetectorParameters detection_params_; 
+            
+            cv::Mat camera_matrix_, dist_coeffs_;
+            //Vectors for storing pose of each marker
+            std::vector<cv::Vec3f> rot_vector_,trans_vector_;
+            
         public:
             visual_perception::FrameGrabber* frame_grabber_;
             //Default Constructor 
@@ -56,8 +72,13 @@ namespace visual_perception
             void eyePoseCompute();
             yarp::sig::Vector getEyePose(){return eye_pose_;};
             
-            
-            
+            cv::Mat getMarkerImage(int);
+            void saveMarkerImages();
+            void detectMarkers(cv::Mat);
+            void drawMarkers(cv::Mat); 
+
+            std::vector<cv::Vec3f> markersPose();
+                        
             //Destructor
             ~PoseEstimation();
     };

@@ -10,6 +10,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <opencv2/aruco.hpp> 
 #include <yarp/os/all.h>
 #include <yarp/sig/all.h>
 #include <yarp/dev/all.h>
@@ -18,6 +19,9 @@
 #include <iCub/ctrl/math.h>
 #include <iCub/iKin/iKinFwd.h>
 
+
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace cv;
 using namespace std; 

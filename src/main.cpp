@@ -1,18 +1,5 @@
-#include <iostream>
-#include <string.h>
-#include <opencv/cv.hpp>
-#include <opencv2/opencv.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
-#include <yarp/os/all.h>
-#include <yarp/sig/all.h>
-#include <yarp/dev/all.h>
-#include <yarp/math/Math.h>
-
-#include <iCub/ctrl/math.h>
-#include <iCub/iKin/iKinFwd.h>
-
+#include "frame_grabber.h"
+#include "pose_estimate.h"
 
 using namespace cv;
 using namespace std; 
@@ -22,8 +9,7 @@ using namespace yarp::dev;
 using namespace yarp::math;
 using namespace iCub::ctrl;
 
-#include "frame_grabber.h"
-#include "pose_estimate.h"
+
 
 using namespace visual_perception;
 
@@ -68,21 +54,26 @@ int main(int argc,char** argv)
     }
     
     visual_perception::PoseEstimation pose(option,eye);
+    pose.saveMarkerImages();
     
     while(1)
     {
-        pose.frame_grabber_->yarpFrameCapture();
-        cv::Mat image =pose.frame_grabber_->getYarpMat();
+        pose.frame_grabber_->cvMatCapture();
+        cv::Mat image =pose.frame_grabber_->getCVMat();
+        pose.detectMarkers(image);
+        pose.drawMarkers(image);
         
         if(!image.empty())
         {
             std::cout << "Captured image" << std::endl;
             cv::namedWindow("Input Image",CV_WINDOW_AUTOSIZE);
             cv::imshow("Input Image",image);
-            cv::waitKey(1);
+            char key = (char) cv::waitKey(1);
+            if (key == 27)
+                break;
         }
-        pose.eyePoseCompute();
-        pose.getEyePose();
+        //pose.eyePoseCompute();
+        //pose.getEyePose();
         //std::cout << "Received eye pose : " << pose.getEyePose().toString() << std::endl; 
     }
     

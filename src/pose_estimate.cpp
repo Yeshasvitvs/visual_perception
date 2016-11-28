@@ -32,26 +32,79 @@ visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string 
 {
     //Initialize the FrameGrabber 
     frame_grabber_ = new FrameGrabber(robot);
-    robot_name_ = robot;
-    eye_name_ = eye+"_v2";
-    std::cout << "Selected eye is " << eye_name_ << std::endl;
     
-    eye_chain_ = new iCub::iKin::iCubEye(eye_name_); 
     
-    //Releasing trunk links 
-    eye_chain_->releaseLink(0);
-    eye_chain_->releaseLink(1);
-    eye_chain_->releaseLink(2);
-    
-    if(!yarp::os::Network::initialized())
+    if(robot!="opencv")
     {
-        yarp::os::Network::init();    
+        //Initialization for eye pose estimation
+        robot_name_ = robot;
+        eye_name_ = eye+"_v2";
+        std::cout << "Selected eye is " << eye_name_ << std::endl;
+        eye_chain_ = new iCub::iKin::iCubEye(eye_name_); 
+    
+        //Releasing trunk links 
+        eye_chain_->releaseLink(0);
+        eye_chain_->releaseLink(1);
+        eye_chain_->releaseLink(2);
+    
+        if(!yarp::os::Network::initialized())
+        {
+            yarp::os::Network::init();    
+            
+        }
+        head_state_input_port_ = new yarp::os::BufferedPort<yarp::sig::Vector>;
+        if(head_state_input_port_->open("/visual_perception/head/state:i"))
+        {
+            std::cout << "Opened the port " << head_state_input_port_->getName() << std::endl;
+            
+        }
     }
-    head_state_input_port_ = new yarp::os::BufferedPort<yarp::sig::Vector>;
-    if(head_state_input_port_->open("/visual_perception/head/state:i"))
+    
+    //Initialization for ArUco markers 
+    std::cout << "ArUCo Markers generation" << std::endl;
+    marker_dictionary_ = cv::aruco::generateCustomDictionary(number_of_markers_,marker_dimension_);
+    marker_images_ = new std::vector<cv::Mat>(number_of_markers_);
+    for(int i = 0; i < number_of_markers_; i++)
     {
-        std::cout << "Opened the port " << head_state_input_port_->getName() << std::endl;
+        cv::aruco::drawMarker(marker_dictionary_,i,200,marker_images_->at(i),1);
     }
+}
+
+Mat visual_perception::PoseEstimation::getMarkerImage(int id)
+{
+    return marker_images_->at(id);
+}
+
+void visual_perception::PoseEstimation::saveMarkerImages()
+{
+    for(int i = 0; i < number_of_markers_; i++)
+    {
+        cv::Mat dummy = getMarkerImage(i);
+        
+        std::string file_name = boost::lexical_cast<std::string>(i) + ".jpg";
+        std::cout << "File Name : " << file_name << std::endl;
+        std::string location = dir_location_ + file_name;
+        std::cout << "location" << location << std::endl;
+        while(!cv::imwrite(location,dummy))
+        {
+            continue;
+        }
+    }
+}
+
+void visual_perception::PoseEstimation::detectMarkers(cv::Mat image)
+{
+    cv::aruco::detectMarkers(image,marker_dictionary_,marker_corners_,marker_ids_,detection_params_,rejected_candidates_);
+}
+
+void visual_perception::PoseEstimation::drawMarkers(cv::Mat image)
+{
+    cv::aruco::drawDetectedMarkers(image,marker_corners_,marker_ids_);
+}
+
+std::vector<cv::Vec3f> visual_perception::PoseEstimation::markersPose()
+{
+    cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rot_vector_,trans_vector_);
 }
 
 void visual_perception::PoseEstimation::eyePoseCompute()
@@ -89,6 +142,8 @@ void visual_perception::PoseEstimation::eyePoseCompute()
     }
     else std::cout << "Error while reading head encoder values!" << std::endl;     
 }
+
+
 
 visual_perception::PoseEstimation::~PoseEstimation()
 {

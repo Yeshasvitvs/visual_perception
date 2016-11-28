@@ -19,7 +19,7 @@ set(OpenCV_DIR /usr/local/share/OpenCV)
 
 message(STATUS "OpenCV_DIR : "${OpenCV_DIR})
 find_package(OpenCV REQUIRED)
-
+message(STATU "OpenCV Version : " ${CV_MAJOR_VERSION})
 message(STATUS "OpenCV_LIBS : " ${OpenCV_LIBS})
 message(STATUS "OpenCV_INCLUDE_DIRS : " ${OpenCV_INCLUDE_DIRS})
 
@@ -31,9 +31,9 @@ find_package(ICUB REQUIRED)
 message(STATUS "ICUB_INCLUDE_DIRS : " ${ICUB_INCLUDE_DIRS})
 message(STATUS "ICUB_LIBRARIES : " ${ICUB_LIBRARIES})
 
-#find_package(BOOST REQUIRED)
-#message(STATUS "BOOST_INCLUDE_DIRS : " ${BOOST_INCLUDE_DIRS})
-#message(STATUS "BOOST_LIBRARIES : " ${BOOST_LIBRARIES})
+find_package(Boost REQUIRED)
+message(STATUS "BOOST_INCLUDE_DIRS : " ${Boost_INCLUDE_DIRS})
+message(STATUS "BOOST_LIBRARIES : " ${Boost_LIBRARIES})
 
 #set(SOURCE_FILES main.cpp frame_grabber.cpp)
 #set(HEADER_FILES utils.h frame_grabber.h)
@@ -41,10 +41,10 @@ message(STATUS "ICUB_LIBRARIES : " ${ICUB_LIBRARIES})
 #message(STATUS "SOURCE_FILES : " ${SOURCE_FILES})
 #message(STATUS "HEADER_FILES : " ${HEADER_FILES})
 
-include_directories(${OpenCV_INCLUDE_DIRS} ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} -I include/)
+include_directories(${OpenCV_INCLUDE_DIRS} ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} -I include/)
 
 add_executable(visual_perception src/main.cpp src/frame_grabber.cpp src/pose_estimate.cpp)
 
-target_link_libraries(visual_perception ${OpenCV_LIBS} ${YARP_LIBRARIES} ${ICUB_LIBRARIES} -lm -ldl)
+target_link_libraries(visual_perception ${OpenCV_LIBS} ${YARP_LIBRARIES} ${ICUB_LIBRARIES} ${Boost_LIBRARIES} -lm -ldl)
 
 #install(TARGETS visual_perception RUNTIME DESTINATION bin)

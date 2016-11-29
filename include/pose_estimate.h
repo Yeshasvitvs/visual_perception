@@ -60,10 +60,8 @@ namespace visual_perception
             cv::Mat camera_matrix_, dist_coeffs_;
             std::string calibration_file_ = "/home/yeshi/projects/visual_perception/out_camera_data.yml";
             cv::FileStorage fs;
-            
-            //Vectors for storing pose of each marker
             std::vector<cv::Vec3d> rot_vector_,trans_vector_;
-            
+            bool calib_success_;
         public:
             bool marker_detect_success_;
             visual_perception::FrameGrabber* frame_grabber_;
@@ -74,6 +72,7 @@ namespace visual_perception
             }
             
             PoseEstimation(std::string,std::string);
+            int loadCameraCalibParams();
             void eyePoseCompute();
             yarp::sig::Vector getEyePose(){return eye_pose_;};
             

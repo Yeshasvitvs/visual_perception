@@ -32,12 +32,7 @@ visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string 
 {
     //Initialize the FrameGrabber 
     frame_grabber_ = new FrameGrabber(robot);
-    
-    //TODO Do the camera calibration later
-    fs.open(calibration_file_,cv::FileStorage::READ);
-    fs["Camera_Matrix"] >> camera_matrix_;
-    fs["Distortion_Coefficients"] >> dist_coeffs_;
-    fs.release();
+    loadCameraCalibParams();
     
     if(robot!="opencv")
     {
@@ -72,6 +67,26 @@ visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string 
     for(int i = 0; i < number_of_markers_; i++)
     {
         cv::aruco::drawMarker(marker_dictionary_,i,200,marker_images_->at(i),1);
+    }
+}
+int visual_perception::PoseEstimation::loadCameraCalibParams()
+{
+    fs.open(calibration_file_,cv::FileStorage::READ);
+    fs["camera_matrix"] >> camera_matrix_;
+    fs["distortion_coefficients"] >> dist_coeffs_;
+    fs.release();
+    
+    if(camera_matrix_.empty() || dist_coeffs_.empty())
+    {
+        std::cout << "Error in loading camera calibration parameters!" << std::endl;
+        calib_success_ = 0;
+    }
+    else
+    {
+        std::cout << "Camera calibration parameters loaded Successfully" << std::endl;
+        std::cout << "Camera Matrix : " << camera_matrix_ << std::endl;
+        std::cout << "Distortion Coefficients : " << dist_coeffs_ << std::endl;
+        calib_success_ = 1;
     }
 }
 
@@ -110,10 +125,18 @@ bool visual_perception::PoseEstimation::detectMarkersAndComputePose(cv::Mat& ima
         std::cout << "Markers detected" << std::endl;
         marker_detect_success_=1;
         cv::aruco::drawDetectedMarkers(image,marker_corners_,marker_ids_);
-        cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rot_vector_,trans_vector_);
-        for(int i=0; i < marker_ids_.size(); i++)
+        if(calib_success_ == 1)
         {
-            cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rot_vector_[i],trans_vector_[i],0.1);
+            cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rot_vector_,trans_vector_);
+            for(int i=0; i < marker_ids_.size(); i++)
+            {
+                cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rot_vector_[i],trans_vector_[i],0.1);
+                
+            }
+        }
+        else
+        {
+            std::cout << "Cannot compute te pose of detected Markers, Error in loading camera calibration parameters!" << std::endl;
         }
     }
 }

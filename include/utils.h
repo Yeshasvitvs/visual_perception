@@ -22,8 +22,7 @@
 #include <iCub/ctrl/math.h>
 #include <iCub/iKin/iKinFwd.h>
 
-
-#include <boost/foreach.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/lexical_cast.hpp>
 
 using namespace cv;

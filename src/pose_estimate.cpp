@@ -28,6 +28,24 @@
 
 #include "pose_estimate.h"
 
+bool visual_perception::PoseEstimation::displayImage(Mat& image)
+{
+    //std::cout << "Captured image" << std::endl;
+    cv::namedWindow("Input Image",CV_WINDOW_AUTOSIZE);
+    cv::imshow("Input Image",image);
+    char key = (char) cv::waitKey(1);
+    if (key == 27)
+    {
+        std::cout << "Esc key pressed!" << std::endl;
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }   
+}
+
+
 visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string eye)
 {
     //Initialize the FrameGrabber 
@@ -68,6 +86,7 @@ visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string 
     {
         cv::aruco::drawMarker(marker_dictionary_,i,200,marker_images_->at(i),1);
     }
+    Track.resize(number_of_markers_);
 }
 int visual_perception::PoseEstimation::loadCameraCalibParams()
 {
@@ -127,11 +146,15 @@ bool visual_perception::PoseEstimation::detectMarkersAndComputePose(cv::Mat& ima
         cv::aruco::drawDetectedMarkers(image,marker_corners_,marker_ids_);
         if(calib_success_ == 1)
         {
-            cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rot_vector_,trans_vector_);
+            std::vector<cv::Vec3d> rvecs, tvecs;
+            cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rvecs,tvecs);
+            time_ = boost::posix_time::microsec_clock::local_time();
+            std::cout << "Rot : " << rvecs << std::endl;
+            std::cout << "Trans : " << tvecs << std::endl; 
             for(int i=0; i < marker_ids_.size(); i++)
             {
-                cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rot_vector_[i],trans_vector_[i],0.1);
-                
+                cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rvecs[i],tvecs[i],0.1);
+                extractTrajectory(time_,rvecs,tvecs);
             }
         }
         else
@@ -141,23 +164,40 @@ bool visual_perception::PoseEstimation::detectMarkersAndComputePose(cv::Mat& ima
     }
 }
 
-void visual_perception::PoseEstimation::drawMarkers(cv::Mat& image)
+void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::ptime& time,std::vector<cv::Vec3d>& rvecs,std::vector<cv::Vec3d>& tvecs)
 {
-    cv::aruco::drawDetectedMarkers(image,marker_corners_,marker_ids_);
-}
-
-void visual_perception::PoseEstimation::markersPoseCompute()
-{
-    cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rot_vector_,trans_vector_);
-}
-
-void visual_perception::PoseEstimation::drawMarkersPose(cv::Mat& image)
-{
+    std::cout << "Extracting marker trajectory" << std::endl;
+    std::cout << "Detected markers id : ";
     for(int i=0; i < marker_ids_.size(); i++)
     {
-        cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rot_vector_[i],trans_vector_[i],0.1);
+        std::cout << marker_ids_.at(i) << " ";
+        Observation observation;
+        observation.time = time_;
+        
+        observation.pose6d.push_back(rvecs[i].val[0]);
+        observation.pose6d.push_back(rvecs[i].val[1]);
+        observation.pose6d.push_back(rvecs[i].val[2]);
+        
+        observation.pose6d.push_back(tvecs[i].val[0]);
+        observation.pose6d.push_back(tvecs[i].val[1]);
+        observation.pose6d.push_back(tvecs[i].val[2]);
+        
+        Track.at(i).push_back(observation);
+    }
+    std::cout << std::endl;
+}
+
+void visual_perception::PoseEstimation::getTrajectoryInfo()
+{
+
+    std::cout << "Track length : " << Track.size() << std::endl;
+    //TODO Fix the number of max markers detected at some point in time
+    for(int i=0; i < number_of_markers_; i++)
+    {
+        std::cout << "Number of Observation of Marker " << i << " : " << Track.at(i).size() << std::endl;
     }
 }
+
 
 void visual_perception::PoseEstimation::eyePoseCompute()
 {
@@ -195,11 +235,28 @@ void visual_perception::PoseEstimation::eyePoseCompute()
     else std::cout << "Error while reading head encoder values!" << std::endl;     
 }
 
+void visual_perception::PoseEstimation::drawMarkers(cv::Mat& image)
+{
+    cv::aruco::drawDetectedMarkers(image,marker_corners_,marker_ids_);
+}
 
+void visual_perception::PoseEstimation::computeMarkersPose()
+{
+    cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rot_vector_,trans_vector_);
+}
+
+void visual_perception::PoseEstimation::drawMarkersPose(cv::Mat& image)
+{
+    for(int i=0; i < marker_ids_.size(); i++)
+    {
+        cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rot_vector_[i],trans_vector_[i],0.1);
+    }
+}
 
 visual_perception::PoseEstimation::~PoseEstimation()
 {
-    //delete frame_grabber_;
+    delete frame_grabber_;
+    delete marker_images_;
     delete eye_chain_;
     delete head_state_;
     delete head_state_input_port_;

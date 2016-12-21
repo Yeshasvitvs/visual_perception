@@ -1,5 +1,6 @@
-#include "frame_grabber.h"
-#include "pose_estimate.h"
+#include <visual_module.h>
+#include <frame_grabber.h>
+#include <pose_estimate.h>
 
 using namespace cv;
 using namespace std; 
@@ -24,8 +25,20 @@ static int show_usage_info()
 
 int main(int argc,char** argv)
 {
+    yarp::os::Network yarp;
+    
+    VisualModule visualModule;
+    yarp::os::ResourceFinder rf;
+    //rf.setVerbose(true);
+    rf.configure(argc,argv);
+       
+    visualModule.runModule(rf);
+    
+    return 0;
+    
+}
 
-    std::string option = argv[1];
+    /*std::string option = argv[1];
     std::cout << "option : " << option << std::endl;
     
     std::string eye = argv[2];
@@ -51,9 +64,9 @@ int main(int argc,char** argv)
             std::cout << "Visual perception run using iCubGazeboSim eyes" <<std::endl;
         }
         else show_usage_info();
-    }
+    }*/
     
-    visual_perception::PoseEstimation pose(option,eye);
+    /*visual_perception::PoseEstimation pose(robotName,sideName);
     pose.saveMarkerImages();
     
     while(1)
@@ -61,7 +74,7 @@ int main(int argc,char** argv)
         pose.frame_grabber_->cvMatCapture();
         cv::Mat image =pose.frame_grabber_->getCVMat();
         pose.detectMarkersAndComputePose(image);
-        
+        pose.getTrajectoryInfo();
         if(!image.empty())
         {
             std::cout << "Captured image" << std::endl;
@@ -71,7 +84,5 @@ int main(int argc,char** argv)
             if (key == 27)
                 break;
         }
-    }
+    }*/
     
-    return 0;
-}

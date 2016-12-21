@@ -43,7 +43,7 @@ message(STATUS "BOOST_LIBRARIES : " ${Boost_LIBRARIES})
 
 include_directories(${OpenCV_INCLUDE_DIRS} ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} -I include/)
 
-add_executable(visual_perception src/main.cpp src/frame_grabber.cpp src/pose_estimate.cpp)
+add_executable(visual_perception src/main.cpp src/visual_module.cpp src/frame_grabber.cpp src/pose_estimate.cpp)
 
 target_link_libraries(visual_perception ${OpenCV_LIBS} ${YARP_LIBRARIES} ${ICUB_LIBRARIES} ${Boost_LIBRARIES} -lm -ldl)
 

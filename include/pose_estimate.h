@@ -62,9 +62,20 @@ namespace visual_perception
             cv::FileStorage fs;
             std::vector<cv::Vec3d> rot_vector_,trans_vector_;
             bool calib_success_;
+            boost::posix_time::ptime time_;
         public:
             bool marker_detect_success_;
             visual_perception::FrameGrabber* frame_grabber_;
+            
+            //Containers for storing the trajectory
+            struct Observation{
+                //TODO Change the time format
+                boost::posix_time::ptime time;
+                int id;
+                std::vector<double> pose6d;
+            };
+            std::vector<std::vector<Observation>> Track;
+            
             //Default Constructor 
             PoseEstimation()
             {
@@ -81,9 +92,13 @@ namespace visual_perception
             
             bool detectMarkersAndComputePose(cv::Mat&);
             void drawMarkers(cv::Mat&); 
-            void markersPoseCompute();
+            void computeMarkersPose();
             void drawMarkersPose(cv::Mat&);
                         
+            void extractTrajectory(boost::posix_time::ptime&,std::vector<cv::Vec3d>&,std::vector<cv::Vec3d>&);
+            void getTrajectoryInfo();
+            
+            bool displayImage(cv::Mat&);
             //Destructor
             ~PoseEstimation();
     };

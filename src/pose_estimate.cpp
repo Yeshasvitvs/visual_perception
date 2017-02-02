@@ -162,6 +162,22 @@ bool visual_perception::PoseEstimation::detectMarkersAndComputePose(cv::Mat& ima
         }
     }
 }
+std::string visual_perception::PoseEstimation::timeConversion(const boost::posix_time::ptime& time)
+{
+    const boost::wformat f = boost::wformat(L"%02d.%02d.%s  %02d:%02d.%02d.%02d")
+                % time.date().year_month_day().day.as_number()
+                % time.date().year_month_day().month.as_number()
+                % time.date().year_month_day().year
+                % time.time_of_day().hours()
+                % time.time_of_day().minutes()
+                % time.time_of_day().seconds()
+                % time.time_of_day().total_milliseconds();
+                
+                const std::wstring result = f.str();  // "21.06.2013  14:38"
+                const std::string t(result.begin(),result.end());
+                return t;
+
+}
 
 void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::ptime& time,std::vector<int>& marker_ids_,::vector<cv::Vec3d>& rvecs,std::vector<cv::Vec3d>& tvecs)
 {
@@ -174,9 +190,7 @@ void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::pti
         //std::cout << "Track length : " << dummy_track_length << std::endl;
         
          //Track structure array variables
-        Track TRACK[dummy_track_length];
-        //Track TRACK[dummy_track_length]; 
-        
+        boost::shared_ptr<Track> track_sptr {new Track[dummy_track_length],std::default_delete<Track[]>() };
         tracks.resize(dummy_track_length);
     
         for(int i=1; i < marker_ids_.size(); i++)
@@ -223,7 +237,7 @@ void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::pti
             //Clear if only one time instance of observation is            
             boost::shared_ptr<Observation> observation_sptr {new Observation};
             observation_sptr->time = time_;
-            observation_sptr->links_rel_transformation.clear();
+            //observation_sptr->links_rel_transformation.clear();
 
 
             
@@ -246,15 +260,15 @@ void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::pti
             observation_sptr->links_rel_transformation.push_back(t3);
             
         
-            TRACK[i-1].obs.push_back(observation_sptr);
+            track_sptr.get()[i-1].obs.push_back(observation_sptr);
             std::string dummy_id = std::to_string(marker_ids_.at(i-1)) + std::to_string(marker_ids_.at(i));
-            TRACK[i-1].id = dummy_id;
+            track_sptr.get()[i-1].id = dummy_id;
             //std::cout << "Track ID " << TRACK[i-1].id << std::endl;
             
-            TRACK[i-1].modified = true;
+            track_sptr.get()[i-1].modified = true;
         
             //This is of track length
-            tracks.at(i-1) = TRACK[i-1];
+            tracks.at(i-1) = track_sptr.get()[i-1];
             
             
         }
@@ -287,7 +301,9 @@ void visual_perception::PoseEstimation::getTrajectoryInfo()
                 std::cout << "Track ID : " << tracks.at(i).id << " ---> " ;
                 for(int o = 0; o < tracks.at(i).obs.size(); o++)
                 {
-                    //std::cout << tracks.at(i).obs.at(o).time;
+                    //std::cout << tracks.at(i).obs.at(o)->time;
+                    std::string t = timeConversion(tracks.at(i).obs.at(o)->time);
+                    std::cout << t << " , " << std::endl;
                     std::cout << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
                 }
             }

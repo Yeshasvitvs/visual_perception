@@ -34,6 +34,7 @@
 #include <iostream>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/format.hpp>
 
 namespace visual_perception
 {
@@ -76,7 +77,6 @@ namespace visual_perception
             //Containers for storing the trajectory information
             //Each observation contains a relative tranformation between two links
             struct Observation{
-                //TODO Change the time format
                 boost::posix_time::ptime time;
                 std::vector<cv::Vec3d> links_rel_transformation;
             };
@@ -89,9 +89,7 @@ namespace visual_perception
                 std::string id;
                 bool modified;
             };
-            
-            //boost::scoped_ptr<Track> track_sptr;
-            
+                        
             //This is vector of tracks between all the links
             std::vector<Track> tracks;
             
@@ -113,6 +111,7 @@ namespace visual_perception
             void drawMarkers(cv::Mat&); 
             void computeMarkersPose();
             void drawMarkersPose(cv::Mat&);
+            std::string timeConversion(const boost::posix_time::ptime&);
                         
             void extractTrajectory(boost::posix_time::ptime&,std::vector<int>&,std::vector<cv::Vec3d>&,std::vector<cv::Vec3d>&);
             void getTrajectoryInfo();

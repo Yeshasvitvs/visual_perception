@@ -32,6 +32,8 @@
 #include "frame_grabber.h"
 #include <string>
 #include <iostream>
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 
 namespace visual_perception
 {
@@ -66,6 +68,7 @@ namespace visual_perception
             std::vector<cv::Vec3d> rot_vector_,trans_vector_;
             bool calib_success_;
             boost::posix_time::ptime time_;
+            
         public:
             bool marker_detect_success_;
             visual_perception::FrameGrabber* frame_grabber_;
@@ -76,15 +79,18 @@ namespace visual_perception
                 //TODO Change the time format
                 boost::posix_time::ptime time;
                 std::vector<cv::Vec3d> links_rel_transformation;
-            }observation;
+            };
             
             //Each Track contains a sequence of observations between two links
             struct Track
             {
-                std::vector<Observation> obs;
+                //std::vector<Observation> obs;
+                std::vector< boost::shared_ptr<Observation> > obs;
                 std::string id;
                 bool modified;
             };
+            
+            //boost::scoped_ptr<Track> track_sptr;
             
             //This is vector of tracks between all the links
             std::vector<Track> tracks;

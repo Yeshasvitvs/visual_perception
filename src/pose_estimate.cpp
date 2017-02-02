@@ -86,7 +86,6 @@ visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string 
     {
         cv::aruco::drawMarker(marker_dictionary_,i,200,marker_images_->at(i),1);
     }
-    Track.resize(number_of_markers_);
 }
 int visual_perception::PoseEstimation::loadCameraCalibParams()
 {
@@ -143,60 +142,160 @@ bool visual_perception::PoseEstimation::detectMarkersAndComputePose(cv::Mat& ima
     {
         std::cout << "Markers detected" << std::endl;
         marker_detect_success_=1;
+        //Detects all the identifiable markers
         cv::aruco::drawDetectedMarkers(image,marker_corners_,marker_ids_);
         if(calib_success_ == 1)
         {
-            std::vector<cv::Vec3d> rvecs, tvecs;
             cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rvecs,tvecs);
             time_ = boost::posix_time::microsec_clock::local_time();
-            std::cout << "Rot : " << rvecs << std::endl;
-            std::cout << "Trans : " << tvecs << std::endl; 
+            //std::cout << "Rot : " << rvecs << std::endl;
+            //std::cout << "Trans : " << tvecs << std::endl; 
             for(int i=0; i < marker_ids_.size(); i++)
             {
+                //Pose values of each marker
                 cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rvecs[i],tvecs[i],0.1);
-                extractTrajectory(time_,rvecs,tvecs);
             }
         }
         else
         {
-            std::cout << "Cannot compute te pose of detected Markers, Error in loading camera calibration parameters!" << std::endl;
+            std::cout << "Cannot compute the pose of detected Markers, Error in loading camera calibration parameters!" << std::endl;
         }
     }
 }
 
-void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::ptime& time,std::vector<cv::Vec3d>& rvecs,std::vector<cv::Vec3d>& tvecs)
+void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::ptime& time,std::vector<int>& marker_ids_,::vector<cv::Vec3d>& rvecs,std::vector<cv::Vec3d>& tvecs)
 {
-    std::cout << "Extracting marker trajectory" << std::endl;
-    std::cout << "Detected markers id : ";
-    for(int i=0; i < marker_ids_.size(); i++)
+    std::cout << "Extracting trajectory" << std::endl;
+    
+    int dummy_track_length = marker_ids_.size()-1;
+    if(dummy_track_length!=0)
     {
-        std::cout << marker_ids_.at(i) << " ";
-        Observation observation;
-        observation.time = time_;
+        std::cout << "Detected more than one marker" << std::endl;
+        //std::cout << "Track length : " << dummy_track_length << std::endl;
         
-        observation.pose6d.push_back(rvecs[i].val[0]);
-        observation.pose6d.push_back(rvecs[i].val[1]);
-        observation.pose6d.push_back(rvecs[i].val[2]);
+         //Track structure array variables
+        Track TRACK[dummy_track_length]; 
+        tracks.resize(dummy_track_length);
+    
+        for(int i=1; i < marker_ids_.size(); i++)
+        { 
+            
+            //Sorting the marker ids
+            if( !std::is_sorted(marker_ids_.begin(),marker_ids_.end()) )
+            {
+                //std::cout << "Actual Marker ids : " << marker_ids_ << "--->";
+                //std::cout << rvecs << " , " << tvecs;
+                
+                sorted_rvecs.resize(rvecs.size());
+                sorted_tvecs.resize(tvecs.size());
+                
+                //SORT the order of marker ids
+                sorted_marker_ids=marker_ids_;
+                std::sort(sorted_marker_ids.begin(),sorted_marker_ids.end());
+                //std::cout << "Sorted Marker ids : " << sorted_marker_ids << "--->";
+     
+                for(int s=0; s < sorted_marker_ids.size(); s++)
+                {
+                    for(int p=0; p < marker_ids_.size(); p++)
+                    {
+                        if(sorted_marker_ids.at(s)==marker_ids_.at(p))
+                        {
+                            sorted_rvecs.at(s) = rvecs.at(p);
+                            sorted_tvecs.at(s) = tvecs.at(p);
+                        }
+                    }
+                }
+                
+                //std::cout << sorted_rvecs << " , " << sorted_tvecs;
+                marker_ids_ = sorted_marker_ids;
+                rvecs = sorted_rvecs;
+                tvecs = sorted_tvecs;
+                
+                //Clearing the sorted vectors
+                sorted_rvecs.clear();
+                sorted_tvecs.clear();
+                sorted_marker_ids.clear();
+            }
+            
+            
+            //Clear if only one time instance of observation is needed
+            observation.links_rel_transformation.clear();
+            observation.time = time_;
+            
+            //TODO Need to do proper relative tranformation
+            cv::Vec3d r1 = rvecs[i-1].val[0] - rvecs[i].val[0];
+            cv::Vec3d r2 = rvecs[i-1].val[1] - rvecs[i].val[1];
+            cv::Vec3d r3 = rvecs[i-1].val[2] - rvecs[i].val[2];
         
-        observation.pose6d.push_back(tvecs[i].val[0]);
-        observation.pose6d.push_back(tvecs[i].val[1]);
-        observation.pose6d.push_back(tvecs[i].val[2]);
+            cv::Vec3d t1 = tvecs[i-1].val[0] - tvecs[i].val[0];
+            cv::Vec3d t2 = tvecs[i-1].val[1] - tvecs[i].val[1];
+            cv::Vec3d t3 = tvecs[i-1].val[2] - tvecs[i].val[2];
         
-        Track.at(i).push_back(observation);
+        
+            observation.links_rel_transformation.push_back(r1);
+            observation.links_rel_transformation.push_back(r2);
+            observation.links_rel_transformation.push_back(r3);
+        
+            observation.links_rel_transformation.push_back(t1);
+            observation.links_rel_transformation.push_back(t2);
+            observation.links_rel_transformation.push_back(t3);
+        
+            TRACK[i-1].obs.push_back(observation);
+            std::string dummy_id = std::to_string(marker_ids_.at(i-1)) + std::to_string(marker_ids_.at(i));
+            TRACK[i-1].id = dummy_id;
+            //std::cout << "Track ID " << TRACK[i-1].id << std::endl;
+            
+            TRACK[i-1].modified = true;
+        
+            //This is of track length
+            tracks.at(i-1) = TRACK[i-1];
+            
+            
+        }
     }
-    std::cout << std::endl;
+    else
+    {
+        std::cout << "Detected only single marker!!!" << std::endl;
+        for(int i=0; i < tracks.size(); i++)
+        {
+            tracks.at(i).modified = false;
+        }
+    }
+    
 }
 
 void visual_perception::PoseEstimation::getTrajectoryInfo()
 {
-
-    std::cout << "Track length : " << Track.size() << std::endl;
-    //TODO Fix the number of max markers detected at some point in time
-    for(int i=0; i < number_of_markers_; i++)
+ 
+    //This should call extractTrajectory and display info
+    if(marker_ids_.size()!=0)
     {
-        std::cout << "Number of Observation of Marker " << i << " : " << Track.at(i).size() << std::endl;
+        extractTrajectory(time_,marker_ids_,rvecs,tvecs);
+        
+        //This should be displayed only if new observations are added
+        std::cout << "track size : " << tracks.size() << std::endl; 
+        for(int i=0; i < tracks.size(); i++)
+        {
+            if(tracks.at(i).modified==true)
+            {
+                std::cout << "Track ID : " << tracks.at(i).id << " ---> " ;
+                for(int o = 0; o < tracks.at(i).obs.size(); o++)
+                {
+                    //std::cout << tracks.at(i).obs.at(o).time;
+                    std::cout << tracks.at(i).obs.at(o).links_rel_transformation << std::endl;
+                }
+            }
+        }   
     }
 }
+
+void visual_perception::PoseEstimation::logTrajectoryInfo()
+{
+    //This should call extractTrajectory and log data
+    
+  
+}
+
 
 
 void visual_perception::PoseEstimation::eyePoseCompute()

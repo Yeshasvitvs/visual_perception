@@ -30,6 +30,8 @@
 #define POSE_ESTIMATE_H
 
 #include "frame_grabber.h"
+#include <string>
+#include <iostream>
 
 namespace visual_perception
 {
@@ -53,7 +55,8 @@ namespace visual_perception
             std::string dir_location_ = "/home/yeshi/projects/visual_perception/markers/";
             
             
-            std::vector<int> marker_ids_;
+            std::vector<int> marker_ids_,sorted_marker_ids;
+            std::vector<cv::Vec3d> rvecs, tvecs, sorted_rvecs, sorted_tvecs;
             std::vector<std::vector<cv::Point2f>> marker_corners_, rejected_candidates_;
             cv::aruco::DetectorParameters detection_params_; 
             
@@ -67,14 +70,24 @@ namespace visual_perception
             bool marker_detect_success_;
             visual_perception::FrameGrabber* frame_grabber_;
             
-            //Containers for storing the trajectory
+            //Containers for storing the trajectory information
+            //Each observation contains a relative tranformation between two links
             struct Observation{
                 //TODO Change the time format
                 boost::posix_time::ptime time;
-                int id;
-                std::vector<double> pose6d;
+                std::vector<cv::Vec3d> links_rel_transformation;
+            }observation;
+            
+            //Each Track contains a sequence of observations between two links
+            struct Track
+            {
+                std::vector<Observation> obs;
+                std::string id;
+                bool modified;
             };
-            std::vector<std::vector<Observation>> Track;
+            
+            //This is vector of tracks between all the links
+            std::vector<Track> tracks;
             
             //Default Constructor 
             PoseEstimation()
@@ -95,8 +108,9 @@ namespace visual_perception
             void computeMarkersPose();
             void drawMarkersPose(cv::Mat&);
                         
-            void extractTrajectory(boost::posix_time::ptime&,std::vector<cv::Vec3d>&,std::vector<cv::Vec3d>&);
+            void extractTrajectory(boost::posix_time::ptime&,std::vector<int>&,std::vector<cv::Vec3d>&,std::vector<cv::Vec3d>&);
             void getTrajectoryInfo();
+            void logTrajectoryInfo();
             
             bool displayImage(cv::Mat&);
             //Destructor

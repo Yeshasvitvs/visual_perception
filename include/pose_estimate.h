@@ -70,7 +70,11 @@ namespace visual_perception
             bool calib_success_;
             boost::posix_time::ptime time_;
                         
+            
         public:
+            
+            //Flags to be set by rpc commands
+            bool log_data_;
             
             bool marker_detect_success_;
             visual_perception::FrameGrabber* frame_grabber_;
@@ -115,8 +119,8 @@ namespace visual_perception
             std::string timeConversion(const boost::posix_time::ptime&);
                                     
             void extractTrajectory(boost::posix_time::ptime&,std::vector<int>&,std::vector<cv::Vec3d>&,std::vector<cv::Vec3d>&);
-            void getTrajectoryInfo();
-            void logTrajectoryInfo();
+            bool getTrajectoryInfo();
+            bool logTrajectoryInfo();
             
             bool displayImage(cv::Mat&);
             //Destructor

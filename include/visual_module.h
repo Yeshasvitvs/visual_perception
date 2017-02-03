@@ -36,6 +36,7 @@
 #include <yarp/os/RFModule.h>
 
 #include<pose_estimate.h>
+#include <boost/shared_ptr.hpp>
 
 namespace visual_perception
 {
@@ -60,22 +61,41 @@ namespace visual_perception
         {
             std::string cmd = command.get(0).asString();
             std::string cmd1 = command.get(1).asString();
-            std::cout << "Received command : " << cmd << " , " << cmd1 << std::endl;
+            std::cout << "Received command : " << cmd << " " << cmd1 << std::endl;
             
             if (cmd == "quit")
                 return false;
-            else{
+            else
+            {
                 reply = command;
                 if(cmd=="log_data")
                 {
-                    //call log data function
-                    //TODO return bool from it
-                    reply.addString("Data Logging OK");     
-                }
-                if(cmd=="show_data")
-                {
-                    //call trajectory info function
-                    //TODO return bool from it
+                    //set log data flag
+                    if(cmd1=="start")
+                    {
+                        if(pose->log_data_==true)
+                        {
+                            reply.addString("Data Logging: [INPROGRESS]");
+                        }
+                        else
+                        {
+                            pose->log_data_ = true;
+                            reply.addString("Data Logging: [START]");
+                        }
+                    }
+                    if(cmd1=="stop")
+                    {
+                        if(pose->log_data_==false)
+                        {
+                            reply.addString("Data Logging: [NOT IN PROGRESS]");
+                        }
+                        else
+                        {
+                            pose->log_data_ = false;
+                            reply.addString("Data Logging: [STOP]");
+                        }
+                    }
+                         
                 }
             }
             return true;
@@ -105,8 +125,6 @@ namespace visual_perception
             pose = new visual_perception::PoseEstimation(this->robotName,this->sideName);
             pose->saveMarkerImages();
 
-            
-            
             return true;
             
         }

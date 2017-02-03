@@ -48,6 +48,7 @@ bool visual_perception::PoseEstimation::displayImage(Mat& image)
 
 visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string eye)
 {
+    log_data_ = false;
     //Initialize the FrameGrabber 
     frame_grabber_ = new FrameGrabber(robot);
     loadCameraCalibParams();
@@ -154,6 +155,7 @@ bool visual_perception::PoseEstimation::detectMarkersAndComputePose(cv::Mat& ima
             {
                 //Pose values of each marker
                 cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rvecs[i],tvecs[i],0.1);
+                extractTrajectory(time_,marker_ids_,rvecs,tvecs);
             }
         }
         else
@@ -237,8 +239,7 @@ void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::pti
             //Clear if only one time instance of observation is            
             boost::shared_ptr<Observation> observation_sptr {new Observation};
             observation_sptr->time = time_;
-            //observation_sptr->links_rel_transformation.clear();
-
+            observation_sptr->links_rel_transformation.clear();
 
             
             //TODO Need to do proper relative tranformation
@@ -270,6 +271,8 @@ void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::pti
             //This is of track length
             tracks.at(i-1) = track_sptr.get()[i-1];
             
+    
+            getTrajectoryInfo();
             
         }
     }
@@ -284,14 +287,13 @@ void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::pti
     
 }
 
-void visual_perception::PoseEstimation::getTrajectoryInfo()
+bool visual_perception::PoseEstimation::getTrajectoryInfo()
 {
  
+    std::cout << "Getting trajectory information" << std::endl;
     //This should call extractTrajectory and display info
     if(marker_ids_.size()!=0)
-    {
-        extractTrajectory(time_,marker_ids_,rvecs,tvecs);
-        
+    {        
         //This should be displayed only if new observations are added
         std::cout << "track size : " << tracks.size() << std::endl; 
         for(int i=0; i < tracks.size(); i++)
@@ -305,18 +307,23 @@ void visual_perception::PoseEstimation::getTrajectoryInfo()
                     std::string t = timeConversion(tracks.at(i).obs.at(o)->time);
                     std::cout << t << " , " << std::endl;
                     std::cout << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
+                    
+                    //Log trajectory information to a file
+                    if(log_data_==true) logTrajectoryInfo();
                 }
             }
         }   
     
         
     }
+    return true;
 }
 
-void visual_perception::PoseEstimation::logTrajectoryInfo()
+bool visual_perception::PoseEstimation::logTrajectoryInfo()
 {
     //This should call extractTrajectory and log data
-    
+    std::cout << "Logging data" << std::endl;
+    return true;
   
 }
 

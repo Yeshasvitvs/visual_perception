@@ -69,8 +69,9 @@ namespace visual_perception
             std::vector<cv::Vec3d> rot_vector_,trans_vector_;
             bool calib_success_;
             boost::posix_time::ptime time_;
-            
+                        
         public:
+            
             bool marker_detect_success_;
             visual_perception::FrameGrabber* frame_grabber_;
             
@@ -112,7 +113,7 @@ namespace visual_perception
             void computeMarkersPose();
             void drawMarkersPose(cv::Mat&);
             std::string timeConversion(const boost::posix_time::ptime&);
-                        
+                                    
             void extractTrajectory(boost::posix_time::ptime&,std::vector<int>&,std::vector<cv::Vec3d>&,std::vector<cv::Vec3d>&);
             void getTrajectoryInfo();
             void logTrajectoryInfo();

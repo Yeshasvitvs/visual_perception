@@ -74,7 +74,6 @@ visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string 
         if(head_state_input_port_->open("/visual_perception/head/state:i"))
         {
             std::cout << "Opened the port " << head_state_input_port_->getName() << std::endl;
-            
         }
     }
     
@@ -87,6 +86,7 @@ visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string 
         cv::aruco::drawMarker(marker_dictionary_,i,200,marker_images_->at(i),1);
     }
 }
+
 int visual_perception::PoseEstimation::loadCameraCalibParams()
 {
     fs.open(calibration_file_,cv::FileStorage::READ);
@@ -135,12 +135,12 @@ bool visual_perception::PoseEstimation::detectMarkersAndComputePose(cv::Mat& ima
     cv::aruco::detectMarkers(image,marker_dictionary_,marker_corners_,marker_ids_,detection_params_,rejected_candidates_);
     if(!marker_ids_.size() > 0)
     {
-        std::cout << "No markers detected!" << std::endl;
+        //std::cout << "No markers detected!" << std::endl;
         marker_detect_success_=0;
     }
     else 
     {
-        std::cout << "Markers detected" << std::endl;
+        //std::cout << "Markers detected" << std::endl;
         marker_detect_success_=1;
         //Detects all the identifiable markers
         cv::aruco::drawDetectedMarkers(image,marker_corners_,marker_ids_);

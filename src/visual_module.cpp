@@ -49,7 +49,7 @@ bool visual_perception::VisualModule::updateModule()
     }
     
     pose->detectMarkersAndComputePose(image);
-    pose->getTrajectoryInfo();
+    //pose->getTrajectoryInfo();
     if(!image.empty())
     {
         if(!pose->displayImage(image))
@@ -73,6 +73,6 @@ bool visual_perception::VisualModule::interruptModule()
 bool visual_perception::VisualModule::close()
 {
     std::cout << "Calling VisualModule close function" << std::endl;
-    handlePort.close();
+    rpc_port.close();
     return true;
 }

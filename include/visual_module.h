@@ -41,7 +41,7 @@ namespace visual_perception
 {
     class VisualModule:public yarp::os::RFModule
     {
-        yarp::os::Port handlePort;
+        yarp::os::RpcServer rpc_port;
         int count;
         std::string robotName;
         std::string partName;
@@ -56,21 +56,47 @@ namespace visual_perception
         double getPeriod();
         bool updateModule();
     
-        bool respond(yarp::os::Bottle& command,yarp::os::Bottle& reply)
+        bool respond(const Bottle& command, Bottle& reply)
         {
-            //Simple ROS kinda service reply
-            std::cout << "Received something" << std::endl;
-            if(command.get(0).asString()=="quit") return false;
-            else reply = command;
+            std::string cmd = command.get(0).asString();
+            std::string cmd1 = command.get(1).asString();
+            std::cout << "Received command : " << cmd << " , " << cmd1 << std::endl;
+            
+            if (cmd == "quit")
+                return false;
+            else{
+                reply = command;
+                if(cmd=="log_data")
+                {
+                    //call log data function
+                    //TODO return bool from it
+                    reply.addString("Data Logging OK");     
+                }
+                if(cmd=="show_data")
+                {
+                    //call trajectory info function
+                    //TODO return bool from it
+                }
+            }
             return true;
         }
+     
+
         
         bool configure(yarp::os::ResourceFinder &rf)
         {
+            
             count=0;
-            //Attaching a port to this module, the received messages can be used in respond method
-            handlePort.open("/visualModule");
-            attach(handlePort);
+            if(!yarp::os::Network::initialized())
+            {
+                yarp::os::Network::init();
+            }
+            if(rpc_port.open("/visualModule/rpc:i"))
+            {
+                std::cout << "Opened the port " << rpc_port.getName() << std::endl;
+                attach(rpc_port);
+            }
+
             robotName = rf.find("robot").asString();
             partName = rf.find("part").asString();
             sideName = rf.find("side").asString();
@@ -78,6 +104,8 @@ namespace visual_perception
             std::cout << "Initializing pose estimation object from visual module" << std::endl;
             pose = new visual_perception::PoseEstimation(this->robotName,this->sideName);
             pose->saveMarkerImages();
+
+            
             
             return true;
             

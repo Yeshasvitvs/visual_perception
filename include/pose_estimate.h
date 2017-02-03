@@ -85,6 +85,7 @@ namespace visual_perception
                 boost::posix_time::ptime time;
                 std::vector<cv::Vec3d> links_rel_transformation;
             };
+            boost::shared_ptr<Observation> observation_sptr {new Observation};
             
             //Each Track contains a sequence of observations between two links
             struct Track

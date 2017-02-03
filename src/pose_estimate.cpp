@@ -237,7 +237,6 @@ void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::pti
             
             
             //Clear if only one time instance of observation is            
-            boost::shared_ptr<Observation> observation_sptr {new Observation};
             observation_sptr->time = time_;
             observation_sptr->links_rel_transformation.clear();
 

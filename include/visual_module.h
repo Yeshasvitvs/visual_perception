@@ -30,6 +30,7 @@
 #define VISUAL_MODULE_H
 
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 
 #include <yarp/os/Network.h>
@@ -59,16 +60,17 @@ namespace visual_perception
     
         bool respond(const Bottle& command, Bottle& reply)
         {
+           
             std::string cmd = command.get(0).asString();
             std::string cmd1 = command.get(1).asString();
+            
             std::cout << "Received command : " << cmd << " " << cmd1 << std::endl;
             
             if (cmd == "quit")
                 return false;
             else
             {
-                reply = command;
-                if(cmd=="log_data")
+                if(cmd=="log")
                 {
                     //set log data flag
                     if(cmd1=="start")
@@ -79,8 +81,18 @@ namespace visual_perception
                         }
                         else
                         {
-                            pose->log_data_ = true;
-                            reply.addString("Data Logging: [START]");
+                             if(command.size() < 3)
+                                 reply.addString("In correct arguments! Correct usage : log start filename");
+                            else
+                            {
+                                std::string cmd2 = command.get(2).asString(); //This is the filename
+                                cmd2 = pose->data_directory_ + "/" + cmd2;
+                                std::cout << "filename : " << cmd2 << std::endl;
+                                pose->file_name_.open(cmd2);
+                                pose->log_data_ = true;
+                                std::string dummy = " Data Logging: [START] to " + cmd2;
+                                reply.addString(dummy);
+                            }
                         }
                     }
                     if(cmd1=="stop")
@@ -92,6 +104,7 @@ namespace visual_perception
                         else
                         {
                             pose->log_data_ = false;
+                            pose->file_name_.close();
                             reply.addString("Data Logging: [STOP]");
                         }
                     }

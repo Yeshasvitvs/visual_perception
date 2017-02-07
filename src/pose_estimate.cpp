@@ -48,6 +48,15 @@ bool visual_perception::PoseEstimation::displayImage(Mat& image)
 
 visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string eye)
 {
+    char cwd[1024];
+    if(getcwd(cwd,sizeof(cwd)) != NULL)
+    {
+        data_directory_ = cwd;
+        data_directory_.replace(data_directory_.find("build"),5,"data");
+        std::cout << "Current data directory : " << data_directory_ << std::endl;
+    }
+    else std::cerr << "getcwd() error!" << std::endl;
+    
     log_data_ = false;
     //Initialize the FrameGrabber 
     frame_grabber_ = new FrameGrabber(robot);
@@ -299,16 +308,26 @@ bool visual_perception::PoseEstimation::getTrajectoryInfo()
         {
             if(tracks.at(i).modified==true)
             {
-                std::cout << "Track ID : " << tracks.at(i).id << " ---> " ;
                 for(int o = 0; o < tracks.at(i).obs.size(); o++)
                 {
-                    //std::cout << tracks.at(i).obs.at(o)->time;
                     std::string t = timeConversion(tracks.at(i).obs.at(o)->time);
-                    std::cout << t << " , " << std::endl;
-                    std::cout << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
-                    
-                    //Log trajectory information to a file
-                    if(log_data_==true) logTrajectoryInfo();
+                    if(log_data_!=true)
+                    {
+                        std::cout << t << " , " << std::endl;
+                        std::cout << "Track ID : " << tracks.at(i).id << " ---> " ;
+                        std::cout << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
+                    }
+                    else
+                    {
+                        if(file_name_.is_open())
+                        {
+                            std::cout << "file is open" << std::endl;
+                            file_name_ << t << " ";
+                            file_name_ << tracks.at(i).id << " ";
+                            file_name_ << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
+                        }
+                        else std::cerr << "file open error" << std::endl;
+                    }
                 }
             }
         }   

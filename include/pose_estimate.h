@@ -31,10 +31,14 @@
 
 #include "frame_grabber.h"
 #include <string>
+#include <unistd.h>
+#include <errno.h>
 #include <iostream>
+#include <fstream>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/format.hpp>
+
 
 namespace visual_perception
 {
@@ -69,12 +73,14 @@ namespace visual_perception
             std::vector<cv::Vec3d> rot_vector_,trans_vector_;
             bool calib_success_;
             boost::posix_time::ptime time_;
-                        
+            
             
         public:
             
             //Flags to be set by rpc commands
             bool log_data_;
+            std::string data_directory_;                        
+            std::ofstream file_name_;
             
             bool marker_detect_success_;
             visual_perception::FrameGrabber* frame_grabber_;

@@ -250,23 +250,48 @@ void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::pti
             observation_sptr->links_rel_transformation.clear();
 
             
-            //TODO Need to do proper relative tranformation
-            cv::Vec3d r1 = rvecs[i-1].val[0] - rvecs[i].val[0];
-            cv::Vec3d r2 = rvecs[i-1].val[1] - rvecs[i].val[1];
-            cv::Vec3d r3 = rvecs[i-1].val[2] - rvecs[i].val[2];
-        
-            cv::Vec3d t1 = tvecs[i-1].val[0] - tvecs[i].val[0];
-            cv::Vec3d t2 = tvecs[i-1].val[1] - tvecs[i].val[1];
-            cv::Vec3d t3 = tvecs[i-1].val[2] - tvecs[i].val[2];
-        
-        
-            observation_sptr->links_rel_transformation.push_back(r1);
-            observation_sptr->links_rel_transformation.push_back(r2);
-            observation_sptr->links_rel_transformation.push_back(r3);
-        
-            observation_sptr->links_rel_transformation.push_back(t1);
-            observation_sptr->links_rel_transformation.push_back(t2);
-            observation_sptr->links_rel_transformation.push_back(t3);
+            //TODO Proper relative transformation implemented - Double check this
+             //Translation vectors       
+            Eigen::Vector3d P1,P2;
+            cv::cv2eigen(tvecs[i-1],P1);
+            cv::cv2eigen(tvecs[i],P2);
+            
+            //Rotational vectors in angels
+            Eigen::Vector3d ang1,ang2;
+            cv::cv2eigen(rvecs[i-1],ang1);
+            cv::cv2eigen(rvecs[i],ang2);
+            
+            //This is differecen in orientation in RYP 
+            //TODO Check this convention for ArUco markers
+            Eigen::Matrix3f R1, R2;
+            R1 = Eigen::AngleAxisf(ang1[0], Eigen::Vector3f::UnitZ())
+                   * Eigen::AngleAxisf(ang1[1], Eigen::Vector3f::UnitY())
+                   * Eigen::AngleAxisf(ang1[2], Eigen::Vector3f::UnitX());
+           
+            R2 = Eigen::AngleAxisf(ang2[0], Eigen::Vector3f::UnitZ())
+                   * Eigen::AngleAxisf(ang2[1], Eigen::Vector3f::UnitY())
+                   * Eigen::AngleAxisf(ang2[2], Eigen::Vector3f::UnitX());
+           
+            //Affine 3d Transformations
+            Eigen::Affine3d T1,T2;
+            T1.setIdentity();
+            T1.translation() = P1;
+            T1.rotate(Eigen::AngleAxisd(M_PI,ang1));
+            
+            T2.setIdentity();
+            T2.translation() = P2;
+            T2.rotate(Eigen::AngleAxisd(M_PI,ang2));
+            
+            //Computing relative transformation between marker poses
+            Eigen::Affine3d rel_trans;
+            rel_trans = T1.inverse()*T2;
+            
+            Eigen::Vector3d trans = rel_trans.translation();
+            Eigen::Matrix3d rot = rel_trans.linear();
+            Eigen::Vector3d euler_angels = rot.eulerAngles(0,1,2);
+            
+            observation_sptr->links_rel_transformation.push_back(trans);
+            observation_sptr->links_rel_transformation.push_back(euler_angels);
             
         
             track_sptr.get()[i-1].obs.push_back(observation_sptr);
@@ -298,12 +323,12 @@ void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::pti
 bool visual_perception::PoseEstimation::getTrajectoryInfo()
 {
  
-    std::cout << "Getting trajectory information" << std::endl;
+    //std::cout << "Getting trajectory information" << std::endl;
     //This should call extractTrajectory and display info
     if(marker_ids_.size()!=0)
     {        
         //This should be displayed only if new observations are added
-        std::cout << "track size : " << tracks.size() << std::endl; 
+        //std::cout << "track size : " << tracks.size() << std::endl; 
         for(int i=0; i < tracks.size(); i++)
         {
             if(tracks.at(i).modified==true)
@@ -315,7 +340,11 @@ bool visual_perception::PoseEstimation::getTrajectoryInfo()
                     {
                         std::cout << t << " , " << std::endl;
                         std::cout << "Track ID : " << tracks.at(i).id << " ---> " ;
-                        std::cout << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
+                        Eigen::Vector3d dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(0);
+                        std::cout << dummy[0] << " " << dummy[1] << " " << dummy[2] << " ";
+                        dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(1);
+                        std::cout << dummy[0] << " " << dummy[1] << " " << dummy[2] << " " << std::endl;
+                        //std::cout << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
                     }
                     else
                     {
@@ -324,7 +353,11 @@ bool visual_perception::PoseEstimation::getTrajectoryInfo()
                             std::cout << "file is open" << std::endl;
                             file_name_ << t << " ";
                             file_name_ << tracks.at(i).id << " ";
-                            file_name_ << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
+                            Eigen::Vector3d dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(0);
+                            file_name_ << dummy[0] << " " << dummy[1] << " " << dummy[2] << " ";
+                            dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(1);
+                            file_name_ << dummy[0] << " " << dummy[1] << " " << dummy[2] << " " << std::endl;
+                            //file_name_ << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
                         }
                         else std::cerr << "file open error" << std::endl;
                     }

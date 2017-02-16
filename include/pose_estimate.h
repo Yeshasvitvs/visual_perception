@@ -38,7 +38,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/format.hpp>
-
+#include <eigen3/Eigen/Geometry>
+#include <eigen3/Eigen/Dense>
+#include <opencv2/core/eigen.hpp>
 
 namespace visual_perception
 {
@@ -89,7 +91,7 @@ namespace visual_perception
             //Each observation contains a relative tranformation between two links
             struct Observation{
                 boost::posix_time::ptime time;
-                std::vector<cv::Vec3d> links_rel_transformation;
+                std::vector<Eigen::Vector3d> links_rel_transformation;
             };
             boost::shared_ptr<Observation> observation_sptr {new Observation};
             

@@ -61,7 +61,10 @@ visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string 
     //Initialize the FrameGrabber 
     frame_grabber_ = new FrameGrabber(robot);
     loadCameraCalibParams();
+    
+    //ROS Time Initialization
     ros::Time::init();
+    
     if(robot!="opencv")
     {
         //Initialization for eye pose estimation
@@ -158,7 +161,7 @@ bool visual_perception::PoseEstimation::detectMarkersAndComputePose(cv::Mat& ima
         {
             cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rvecs,tvecs);
             time_ = boost::posix_time::microsec_clock::local_time();
-            ros_time_ = ros::Time::now().toSec();
+            ros_time_ = ros::Time::now();
             //std::cout << "Rot : " << rvecs << std::endl;
             //std::cout << "Trans : " << tvecs << std::endl; 
             for(int i=0; i < marker_ids_.size(); i++)
@@ -191,7 +194,7 @@ std::string visual_perception::PoseEstimation::timeConversion(const boost::posix
 
 }
 
-void visual_perception::PoseEstimation::extractTrajectory(double& ros_time_,boost::posix_time::ptime& time,std::vector<int>& marker_ids_,std::vector<cv::Vec3d>& rvecs,std::vector<cv::Vec3d>& tvecs)
+void visual_perception::PoseEstimation::extractTrajectory(ros::Time& ros_time_,boost::posix_time::ptime& time,std::vector<int>& marker_ids_,std::vector<cv::Vec3d>& rvecs,std::vector<cv::Vec3d>& tvecs)
 {
     std::cout << "Extracting trajectory" << std::endl;
     
@@ -248,7 +251,7 @@ void visual_perception::PoseEstimation::extractTrajectory(double& ros_time_,boos
             
             //Clear if only one time instance of observation is            
             observation_sptr->time = ros_time_;
-            observation_sptr->links_rel_transformation.clear();
+            //observation_sptr->links_rel_transformation.clear();
 
             
             //TODO Proper relative transformation implemented - Double check this
@@ -289,11 +292,21 @@ void visual_perception::PoseEstimation::extractTrajectory(double& ros_time_,boos
             
             Eigen::Vector3d trans = rel_trans.translation();
             Eigen::Matrix3d rot = rel_trans.linear();
-            Eigen::Vector3d euler_angels = rot.eulerAngles(0,1,2);
+            Eigen::Quaterniond rot_q(rot);
             
-            observation_sptr->links_rel_transformation.push_back(trans);
-            observation_sptr->links_rel_transformation.push_back(euler_angels);
+            //Eigen::Vector3d euler_angels = rot.eulerAngles(0,1,2);
             
+            //observation_sptr->links_rel_transformation.push_back(trans);
+            //observation_sptr->links_rel_transformation.push_back(euler_angels);
+            
+            observation_sptr->transform.translation.x = trans[0];
+            observation_sptr->transform.translation.y = trans[1];
+            observation_sptr->transform.translation.z = trans[2];
+            
+            observation_sptr->transform.rotation.w = rot_q.w();
+            observation_sptr->transform.rotation.x = rot_q.x();
+            observation_sptr->transform.rotation.y = rot_q.y();
+            observation_sptr->transform.rotation.z = rot_q.z();
         
             track_sptr.get()[i-1].obs.push_back(observation_sptr);
             std::string dummy_id = std::to_string(marker_ids_.at(i-1)) + std::to_string(marker_ids_.at(i));
@@ -341,11 +354,17 @@ bool visual_perception::PoseEstimation::getTrajectoryInfo()
                     {
                         std::cout << tracks.at(i).obs.at(o)->time << " , " << std::endl;
                         std::cout << "Track ID : " << tracks.at(i).id << " ---> " ;
-                        Eigen::Vector3d dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(0);
-                        std::cout << dummy[0] << " " << dummy[1] << " " << dummy[2] << " ";
-                        dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(1);
-                        std::cout << dummy[0] << " " << dummy[1] << " " << dummy[2] << " " << std::endl;
+                        //Eigen::Vector3d dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(0);
+                        //std::cout << dummy[0] << " " << dummy[1] << " " << dummy[2] << " ";
+                        //dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(1);
+                        //std::cout << dummy[0] << " " << dummy[1] << " " << dummy[2] << " " << std::endl;
                         //std::cout << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
+                        
+                        geometry_msgs::Transform dummy = tracks.at(i).obs.at(o)->transform;
+                        std::cout << dummy.translation.x << " " << dummy.translation.y << " " << dummy.translation.z << " ";
+                        std::cout << dummy.rotation.w << " " << dummy.rotation.x << " " << dummy.rotation.y << " " <<
+                        dummy.rotation.z << std::endl;
+                        
                     }
                     else
                     {
@@ -354,10 +373,11 @@ bool visual_perception::PoseEstimation::getTrajectoryInfo()
                             std::cout << "file is open" << std::endl;
                             file_name_ << tracks.at(i).obs.at(o)->time << " ";
                             file_name_ << tracks.at(i).id << " ";
-                            Eigen::Vector3d dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(0);
-                            file_name_ << dummy[0] << " " << dummy[1] << " " << dummy[2] << " ";
-                            dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(1);
-                            file_name_ << dummy[0] << " " << dummy[1] << " " << dummy[2] << " " << std::endl;
+                            //Eigen::Vector3d dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(0);
+                            geometry_msgs::Transform dummy = tracks.at(i).obs.at(o)->transform;
+                            file_name_ << dummy.translation.x << " " << dummy.translation.y << " " << dummy.translation.z << " ";
+                            file_name_ << dummy.rotation.w << " " << dummy.rotation.x << " " << dummy.rotation.y << " " 
+                            << dummy.rotation.z <<  std::endl;
                             //file_name_ << tracks.at(i).obs.at(o)->links_rel_transformation << std::endl;
                         }
                         else std::cerr << "file open error" << std::endl;

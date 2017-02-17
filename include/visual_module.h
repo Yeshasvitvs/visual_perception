@@ -58,7 +58,7 @@ namespace visual_perception
         double getPeriod();
         bool updateModule();
     
-        bool respond(const Bottle& command, Bottle& reply)
+        bool respond(const yarp::os::Bottle& command, yarp::os::Bottle& reply)
         {
            
             std::string cmd = command.get(0).asString();

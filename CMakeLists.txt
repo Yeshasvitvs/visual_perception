@@ -13,12 +13,14 @@ else()
         message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
+SET(articulation_model_msgs_DIR "/home/yeshi/projects/articulation_model_msgs/build/devel/share/articulation_model_msgs/cmake")
+find_package(articulation_model_msgs REQUIRED)
+
 set(OpenCV_FOUND TRUE)
 set(OpenCV_DIR /usr/local/share/OpenCV)
 #set(OpenCV_INCLUDE_DIRS /usr/local/include/opencv)
 
-find_package(catkin REQUIRED COMPONENTS roscpp)
-
+find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs)
 message(STATUS "OpenCV_DIR : "${OpenCV_DIR})
 find_package(OpenCV REQUIRED)
 message(STATU "OpenCV Version : " ${CV_MAJOR_VERSION})

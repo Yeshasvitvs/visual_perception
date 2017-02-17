@@ -42,8 +42,10 @@
 #include <eigen3/Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
 
+#include <ros/ros.h>
 #include <ros/time.h>
 #include <ros/rostime_decl.h>
+#include <geometry_msgs/Transform.h>
 
 namespace visual_perception
 {
@@ -78,8 +80,7 @@ namespace visual_perception
             std::vector<cv::Vec3d> rot_vector_,trans_vector_;
             bool calib_success_;
             boost::posix_time::ptime time_;
-            double ros_time_;
-            
+            ros::Time ros_time_;
             
         public:
             
@@ -96,15 +97,15 @@ namespace visual_perception
             struct Observation
             {
                 //boost::posix_time::ptime time;
-                double time;
-                std::vector<Eigen::Vector3d> links_rel_transformation;
+                ros::Time time;
+                //std::vector<Eigen::Vector3d> links_rel_transformation;
+                geometry_msgs::Transform transform;
             };
             boost::shared_ptr<Observation> observation_sptr {new Observation};
             
             //Each Track contains a sequence of observations between two links
             struct Track
             {
-                //std::vector<Observation> obs;
                 std::vector< boost::shared_ptr<Observation> > obs;
                 std::string id;
                 bool modified;
@@ -133,7 +134,7 @@ namespace visual_perception
             void drawMarkersPose(cv::Mat&);
             std::string timeConversion(const boost::posix_time::ptime&);
                                     
-            void extractTrajectory(double&, boost::posix_time::ptime&,std::vector<int>&,std::vector<cv::Vec3d>&,std::vector<cv::Vec3d>&);
+            void extractTrajectory(ros::Time&, boost::posix_time::ptime&,std::vector<int>&,std::vector<cv::Vec3d>&,std::vector<cv::Vec3d>&);
             bool getTrajectoryInfo();
             bool logTrajectoryInfo();
             

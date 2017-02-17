@@ -42,6 +42,9 @@
 #include <eigen3/Eigen/Dense>
 #include <opencv2/core/eigen.hpp>
 
+#include <ros/time.h>
+#include <ros/rostime_decl.h>
+
 namespace visual_perception
 {
     class PoseEstimation
@@ -75,6 +78,7 @@ namespace visual_perception
             std::vector<cv::Vec3d> rot_vector_,trans_vector_;
             bool calib_success_;
             boost::posix_time::ptime time_;
+            double ros_time_;
             
             
         public:
@@ -89,8 +93,10 @@ namespace visual_perception
             
             //Containers for storing the trajectory information
             //Each observation contains a relative tranformation between two links
-            struct Observation{
-                boost::posix_time::ptime time;
+            struct Observation
+            {
+                //boost::posix_time::ptime time;
+                double time;
                 std::vector<Eigen::Vector3d> links_rel_transformation;
             };
             boost::shared_ptr<Observation> observation_sptr {new Observation};
@@ -127,7 +133,7 @@ namespace visual_perception
             void drawMarkersPose(cv::Mat&);
             std::string timeConversion(const boost::posix_time::ptime&);
                                     
-            void extractTrajectory(boost::posix_time::ptime&,std::vector<int>&,std::vector<cv::Vec3d>&,std::vector<cv::Vec3d>&);
+            void extractTrajectory(double&, boost::posix_time::ptime&,std::vector<int>&,std::vector<cv::Vec3d>&,std::vector<cv::Vec3d>&);
             bool getTrajectoryInfo();
             bool logTrajectoryInfo();
             

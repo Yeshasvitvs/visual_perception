@@ -28,7 +28,7 @@
 
 #include "pose_estimate.h"
 
-bool visual_perception::PoseEstimation::displayImage(Mat& image)
+bool visual_perception::PoseEstimation::displayImage(cv::Mat& image)
 {
     //std::cout << "Captured image" << std::endl;
     cv::namedWindow("Input Image",CV_WINDOW_AUTOSIZE);
@@ -61,7 +61,7 @@ visual_perception::PoseEstimation::PoseEstimation(std::string robot,std::string 
     //Initialize the FrameGrabber 
     frame_grabber_ = new FrameGrabber(robot);
     loadCameraCalibParams();
-    
+    ros::Time::init();
     if(robot!="opencv")
     {
         //Initialization for eye pose estimation
@@ -118,7 +118,7 @@ int visual_perception::PoseEstimation::loadCameraCalibParams()
     }
 }
 
-Mat visual_perception::PoseEstimation::getMarkerImage(int id)
+cv::Mat visual_perception::PoseEstimation::getMarkerImage(int id)
 {
     return marker_images_->at(id);
 }
@@ -158,13 +158,14 @@ bool visual_perception::PoseEstimation::detectMarkersAndComputePose(cv::Mat& ima
         {
             cv::aruco::estimatePoseSingleMarkers(marker_corners_,0.05,camera_matrix_,dist_coeffs_,rvecs,tvecs);
             time_ = boost::posix_time::microsec_clock::local_time();
+            ros_time_ = ros::Time::now().toSec();
             //std::cout << "Rot : " << rvecs << std::endl;
             //std::cout << "Trans : " << tvecs << std::endl; 
             for(int i=0; i < marker_ids_.size(); i++)
             {
                 //Pose values of each marker
                 cv::aruco::drawAxis(image,camera_matrix_,dist_coeffs_,rvecs[i],tvecs[i],0.1);
-                extractTrajectory(time_,marker_ids_,rvecs,tvecs);
+                extractTrajectory(ros_time_,time_,marker_ids_,rvecs,tvecs);
             }
         }
         else
@@ -190,7 +191,7 @@ std::string visual_perception::PoseEstimation::timeConversion(const boost::posix
 
 }
 
-void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::ptime& time,std::vector<int>& marker_ids_,::vector<cv::Vec3d>& rvecs,std::vector<cv::Vec3d>& tvecs)
+void visual_perception::PoseEstimation::extractTrajectory(double& ros_time_,boost::posix_time::ptime& time,std::vector<int>& marker_ids_,std::vector<cv::Vec3d>& rvecs,std::vector<cv::Vec3d>& tvecs)
 {
     std::cout << "Extracting trajectory" << std::endl;
     
@@ -246,7 +247,7 @@ void visual_perception::PoseEstimation::extractTrajectory(boost::posix_time::pti
             
             
             //Clear if only one time instance of observation is            
-            observation_sptr->time = time_;
+            observation_sptr->time = ros_time_;
             observation_sptr->links_rel_transformation.clear();
 
             
@@ -335,10 +336,10 @@ bool visual_perception::PoseEstimation::getTrajectoryInfo()
             {
                 for(int o = 0; o < tracks.at(i).obs.size(); o++)
                 {
-                    std::string t = timeConversion(tracks.at(i).obs.at(o)->time);
+                    //std::string t = timeConversion(tracks.at(i).obs.at(o)->time);
                     if(log_data_!=true)
                     {
-                        std::cout << t << " , " << std::endl;
+                        std::cout << tracks.at(i).obs.at(o)->time << " , " << std::endl;
                         std::cout << "Track ID : " << tracks.at(i).id << " ---> " ;
                         Eigen::Vector3d dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(0);
                         std::cout << dummy[0] << " " << dummy[1] << " " << dummy[2] << " ";
@@ -351,7 +352,7 @@ bool visual_perception::PoseEstimation::getTrajectoryInfo()
                         if(file_name_.is_open())
                         {
                             std::cout << "file is open" << std::endl;
-                            file_name_ << t << " ";
+                            file_name_ << tracks.at(i).obs.at(o)->time << " ";
                             file_name_ << tracks.at(i).id << " ";
                             Eigen::Vector3d dummy = tracks.at(i).obs.at(o)->links_rel_transformation.at(0);
                             file_name_ << dummy[0] << " " << dummy[1] << " " << dummy[2] << " ";
@@ -405,7 +406,7 @@ void visual_perception::PoseEstimation::eyePoseCompute()
     if(head_state_->length()!=0)
     {
         std::cout << "Received head state encoder values : " << head_state_->toString() << std::endl;
-        eye_pose_ = eye_chain_->EndEffPose(iCub::ctrl::CTRL_DEG2RAD**head_state_);
+        eye_pose_ = eye_chain_->EndEffPose(iCub::ctrl::CTRL_DEG2RAD * *head_state_ );
         if(eye_pose_.length()!=0)
         {
             std::cout << "Computed eye pose : " << eye_pose_.toString() << std::endl;

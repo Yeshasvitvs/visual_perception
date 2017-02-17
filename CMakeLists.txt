@@ -17,6 +17,8 @@ set(OpenCV_FOUND TRUE)
 set(OpenCV_DIR /usr/local/share/OpenCV)
 #set(OpenCV_INCLUDE_DIRS /usr/local/include/opencv)
 
+find_package(catkin REQUIRED COMPONENTS roscpp)
+
 message(STATUS "OpenCV_DIR : "${OpenCV_DIR})
 find_package(OpenCV REQUIRED)
 message(STATU "OpenCV Version : " ${CV_MAJOR_VERSION})
@@ -41,10 +43,10 @@ message(STATUS "BOOST_LIBRARIES : " ${Boost_LIBRARIES})
 #message(STATUS "SOURCE_FILES : " ${SOURCE_FILES})
 #message(STATUS "HEADER_FILES : " ${HEADER_FILES})
 
-include_directories(${OpenCV_INCLUDE_DIRS} ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} -I include/)
+include_directories(${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} -I include/)
 
 add_executable(visual_perception src/main.cpp src/visual_module.cpp src/frame_grabber.cpp src/pose_estimate.cpp)
 
-target_link_libraries(visual_perception ${OpenCV_LIBS} ${YARP_LIBRARIES} ${ICUB_LIBRARIES} ${Boost_LIBRARIES} -lm -ldl)
+target_link_libraries(visual_perception ${catkin_LIBRARIES} ${OpenCV_LIBS} ${YARP_LIBRARIES} ${ICUB_LIBRARIES} ${Boost_LIBRARIES} -lm -ldl)
 
 #install(TARGETS visual_perception RUNTIME DESTINATION bin)

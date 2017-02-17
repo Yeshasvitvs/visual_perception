@@ -22,7 +22,7 @@ visual_perception::FrameGrabber::FrameGrabber(std::string option)
             yarp::os::Network::init();
         }
         
-        input_frame_port_ptr_ = new yarp::os::BufferedPort<yarp::sig::ImageOf< PixelBgr > >;
+        input_frame_port_ptr_ = new yarp::os::BufferedPort<yarp::sig::ImageOf< yarp::sig::PixelBgr > >;
         if(input_frame_port_ptr_->open("/visual_perception/frame/in"))
         {
             std::cout << "Opened the port " << input_frame_port_ptr_->getName() << std::endl;

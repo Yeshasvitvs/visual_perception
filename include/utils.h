@@ -25,13 +25,13 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/lexical_cast.hpp>
 
-using namespace cv;
-using namespace std; 
-using namespace yarp::os;
-using namespace yarp::sig;
-using namespace yarp::dev;
+//using namespace cv;
+//using namespace std; 
+//using namespace yarp::os;
+//using namespace yarp::sig;
+//using namespace yarp::dev;
 using namespace yarp::math;
-using namespace iCub::ctrl;
+//using namespace iCub::ctrl;
 
 
 #endif // UTILS_H

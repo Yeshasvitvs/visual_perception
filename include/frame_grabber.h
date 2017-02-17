@@ -44,8 +44,8 @@ namespace visual_perception
             cv::VideoCapture* cv_capture_ptr_;
             cv::Mat input_cv_mat_; 
             
-            yarp::os::BufferedPort<yarp::sig::ImageOf< PixelBgr > > *input_frame_port_ptr_;
-            yarp::sig::ImageOf< PixelBgr > *input_yarp_frame_;
+            yarp::os::BufferedPort<yarp::sig::ImageOf< yarp::sig::PixelBgr > > *input_frame_port_ptr_;
+            yarp::sig::ImageOf< yarp::sig::PixelBgr > *input_yarp_frame_;
             cv::Mat input_yarp_mat_;
             std::string cam_port_name_;
             
@@ -68,7 +68,7 @@ namespace visual_perception
             
             cv::Mat getYarpMat(){return input_yarp_mat_;};
             
-            yarp::sig::ImageOf< PixelBgr > getYarpImg(){return *input_yarp_frame_;};
+            yarp::sig::ImageOf< yarp::sig::PixelBgr > getYarpImg(){return *input_yarp_frame_;};
             
             //Destructor 
             ~FrameGrabber();

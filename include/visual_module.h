@@ -82,7 +82,7 @@ namespace visual_perception
                         else
                         {
                              if(command.size() < 3)
-                                 reply.addString("In correct arguments! Correct usage : log start filename");
+                                 reply.addString("Incorrect arguments! Correct usage : log start filename");
                             else
                             {
                                 std::string cmd2 = command.get(2).asString(); //This is the filename

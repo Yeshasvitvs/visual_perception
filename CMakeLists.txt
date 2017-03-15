@@ -21,7 +21,7 @@ set(OpenCV_DIR /usr/local/share/OpenCV)
 #set(OpenCV_INCLUDE_DIRS /usr/local/include/opencv)
 
 find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs)
-message(STATUS "OpenCV_DIR : "${OpenCV_DIR})
+message(STATUS "OpenCV_DIR : " ${OpenCV_DIR})
 find_package(OpenCV REQUIRED)
 message(STATU "OpenCV Version : " ${CV_MAJOR_VERSION})
 message(STATUS "OpenCV_LIBS : " ${OpenCV_LIBS})
